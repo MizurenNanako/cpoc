@@ -1,5 +1,10 @@
 (ocamllex raw_lexer)
 
+(menhir
+ (modules parser)
+ (flags --table --external-tokens Lexical.Token)
+ (infer true))
+
 (executable
  (public_name cpoc)
  (name main))

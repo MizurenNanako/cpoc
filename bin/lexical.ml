@@ -60,9 +60,9 @@ module Token = struct
   let dump_raw_token out (tok : raw_token) : unit =
     let open Printf in
     match tok with
-    | INT i -> fprintf out "%ld" i
-    | FLOAT f -> fprintf out "%f" f
-    | ID s -> fprintf out "%s" s
+    | INT i -> fprintf out "INT<%ld>" i
+    | FLOAT f -> fprintf out "FLOAT<%f>" f
+    | ID s -> fprintf out "ID<%s>" s
     | SEMI -> fprintf out "SEMI"
     | COMMA -> fprintf out "COMMA"
     | ASSIGNOP -> fprintf out "ASSIGNOP"
@@ -128,7 +128,9 @@ end = struct
     | 'D' | 'd' -> 13l
     | 'E' | 'e' -> 14l
     | 'F' | 'f' -> 15l
-    | _ -> raise (BadLiteral "bad char")
+    | 'X' | 'x' ->
+        0l (* 'X' or 'x' only appears in first two of hex num *)
+    | c -> raise (BadLiteral (Printf.sprintf "bad char: %c" c))
 
   let make_fold base acc ch =
     let num = ord ch in
