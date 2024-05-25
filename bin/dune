@@ -1,0 +1,5 @@
+(ocamllex raw_lexer)
+
+(executable
+ (public_name cpoc)
+ (name main))
