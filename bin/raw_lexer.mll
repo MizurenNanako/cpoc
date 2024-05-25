@@ -19,11 +19,11 @@ let significand   = (wholenumber "." fraction) | ("." fraction) | (wholenumber "
 let exponent      = ['e' 'E' 'p' 'P'] ['+' '-']? ['0'-'9']+
 let literial_real = (significand exponent? | wholenumber exponent)
 
-rule get_token = parse
-| ' '+ { get_token lexbuf }
-| "//" [^ '\n']* '\n' { new_line lexbuf; get_token lexbuf }
-| "/*" { skip_comment lexbuf; get_token lexbuf; }
-| "\n" { new_line lexbuf; get_token lexbuf }
+rule get_raw_token = parse
+| ' '+ { get_raw_token lexbuf }
+| "//" [^ '\n']* '\n' { new_line lexbuf; get_raw_token lexbuf }
+| "/*" { skip_comment lexbuf; get_raw_token lexbuf; }
+| "\n" { new_line lexbuf; get_raw_token lexbuf }
 | zero { INT 0l }
 | identifier as s { ID s }
 | literial_real as f { FLOAT (L.float_of_string f) }
@@ -70,3 +70,9 @@ and skip_comment = parse
 | eof { raise (BadToken "unterminated comment") }
 | [^ '*']+ { skip_comment lexbuf }
 | _ { skip_comment lexbuf }
+
+{
+    let get_token lexbuf = 
+        let tok = get_raw_token lexbuf in
+        tok, (lexbuf.lex_start_p, lexbuf.lex_curr_p)
+}

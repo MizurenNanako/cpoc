@@ -4,7 +4,7 @@ let () =
   let lexbuf = Lexing.from_channel file in
   let rec loop () =
     match Raw_lexer.get_token lexbuf with
-    | EOF -> ()
+    | EOF, _ -> ()
     | tok ->
         Printf.printf "%a\n" Lexical.Token.dump tok;
         loop ()

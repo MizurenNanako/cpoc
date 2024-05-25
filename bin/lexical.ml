@@ -1,7 +1,27 @@
+module Range = struct
+  type pos = Lexing.position
+  type t = pos * pos
+
+  let join (a : t) (b : t) : t = (fst a, snd b)
+
+  let dump_pos out (p : pos) =
+    let fname, lineno, colno =
+      (p.pos_fname, p.pos_lnum, p.pos_cnum - p.pos_bol + 1)
+    in
+    let open Printf in
+    fprintf out "%s:%i:%i" fname lineno colno
+
+  let dump out (r : t) =
+    let a, b = r in
+    Printf.fprintf out "%a-%a" dump_pos a dump_pos b
+end
+
 module Token = struct
   exception BadToken of string
 
-  type token =
+  type token = raw_token * Range.t
+
+  and raw_token =
     | INT of int32
     | FLOAT of float
     | ID of string
@@ -37,7 +57,7 @@ module Token = struct
     | WHILE
     | EOF
 
-  let dump out (tok : token) : unit =
+  let dump_raw_token out (tok : raw_token) : unit =
     let open Printf in
     match tok with
     | INT i -> fprintf out "%ld" i
@@ -74,6 +94,10 @@ module Token = struct
     | ELSE -> fprintf out "ELSE"
     | WHILE -> fprintf out "WHILE"
     | EOF -> fprintf out "[eof]"
+
+  let dump out (tok : token) =
+    let r, p = tok in
+    Printf.fprintf out "%a in %a" dump_raw_token r Range.dump p
 end
 
 module Literal : sig
