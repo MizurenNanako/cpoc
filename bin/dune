@@ -1,10 +1,36 @@
 (ocamllex raw_lexer)
 
+(library
+ (name raw_lexer)
+ (modules raw_lexer)
+ (libraries lexical))
+
 (menhir
  (modules parser)
- (flags --table --external-tokens Lexical.Token)
+ (flags --table --external-tokens Lexical.Token --dump)
  (infer true))
 
+(library
+ (name parser)
+ (modules parser)
+ (libraries lexical syntactical menhirLib))
+
+(library
+ (name lexical)
+ (modules lexical)
+ (preprocess
+  (pps ppx_sexp_conv))
+ (libraries sexplib))
+
+(library
+ (name syntactical)
+ (modules syntactical)
+ (preprocess
+  (pps ppx_sexp_conv))
+ (libraries sexplib lexical))
+
 (executable
+ (modules main)
+ (name main)
  (public_name cpoc)
- (name main))
+ (libraries raw_lexer parser syntactical sexplib))

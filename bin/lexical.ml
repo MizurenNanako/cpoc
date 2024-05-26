@@ -1,8 +1,20 @@
 module Range = struct
   type pos = Lexing.position
-  type t = pos * pos
+
+  let sexp_of_pos (p : pos) =
+    let open Sexplib.Pre_sexp in
+    let s =
+      Printf.sprintf "%s:%i:%i" p.pos_fname p.pos_lnum
+        (p.pos_cnum - p.pos_bol + 1)
+    in
+    Atom s
+
+  type t = pos * pos [@@deriving sexp_of]
 
   let join (a : t) (b : t) : t = (fst a, snd b)
+
+  let of_lexbuf (lexbuf : Lexing.lexbuf) : t =
+    (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr_p)
 
   let dump_pos out (p : pos) =
     let fname, lineno, colno =
@@ -19,85 +31,79 @@ end
 module Token = struct
   exception BadToken of string
 
-  type token = raw_token * Range.t
-
-  and raw_token =
-    | INT of int32
-    | FLOAT of float
-    | ID of string
-    | SEMI
-    | COMMA
-    | ASSIGNOP
-    | RELOP_GT
-    | RELOP_LT
-    | RELOP_GEQ
-    | RELOP_LEQ
-    | RELOP_EEQ
-    | RELOP_NEQ
-    | PLUS
-    | MINUS
-    | STAR
-    | DIV
-    | AND
-    | OR
-    | DOT
-    | NOT
-    | TYPE_INT
-    | TYPE_FLOAT
-    | LP
-    | RP
-    | LB
-    | RB
-    | LC
-    | RC
-    | STRUCT
-    | RETURN
-    | IF
-    | ELSE
-    | WHILE
+  type token =
+    | INT of (int32 * Range.t)
+    | FLOAT of (float * Range.t)
+    | ID of (string * Range.t)
+    | SEMI of (unit * Range.t)
+    | COMMA of (unit * Range.t)
+    | ASSIGNOP of (unit * Range.t)
+    | RELOP_GT of (unit * Range.t)
+    | RELOP_LT of (unit * Range.t)
+    | RELOP_GEQ of (unit * Range.t)
+    | RELOP_LEQ of (unit * Range.t)
+    | RELOP_EEQ of (unit * Range.t)
+    | RELOP_NEQ of (unit * Range.t)
+    | PLUS of (unit * Range.t)
+    | MINUS of (unit * Range.t)
+    | STAR of (unit * Range.t)
+    | DIV of (unit * Range.t)
+    | AND of (unit * Range.t)
+    | OR of (unit * Range.t)
+    | DOT of (unit * Range.t)
+    | NOT of (unit * Range.t)
+    | TYPE_INT of (unit * Range.t)
+    | TYPE_FLOAT of (unit * Range.t)
+    | LP of (unit * Range.t)
+    | RP of (unit * Range.t)
+    | LB of (unit * Range.t)
+    | RB of (unit * Range.t)
+    | LC of (unit * Range.t)
+    | RC of (unit * Range.t)
+    | STRUCT of (unit * Range.t)
+    | RETURN of (unit * Range.t)
+    | IF of (unit * Range.t)
+    | ELSE of (unit * Range.t)
+    | WHILE of (unit * Range.t)
     | EOF
 
-  let dump_raw_token out (tok : raw_token) : unit =
+  let dump out (tok : token) : unit =
     let open Printf in
     match tok with
-    | INT i -> fprintf out "INT<%ld>" i
-    | FLOAT f -> fprintf out "FLOAT<%f>" f
-    | ID s -> fprintf out "ID<%s>" s
-    | SEMI -> fprintf out "SEMI"
-    | COMMA -> fprintf out "COMMA"
-    | ASSIGNOP -> fprintf out "ASSIGNOP"
-    | RELOP_GT -> fprintf out "RELOP_GT"
-    | RELOP_LT -> fprintf out "RELOP_LT"
-    | RELOP_GEQ -> fprintf out "RELOP_GEQ"
-    | RELOP_LEQ -> fprintf out "RELOP_LEQ"
-    | RELOP_EEQ -> fprintf out "RELOP_EEQ"
-    | RELOP_NEQ -> fprintf out "RELOP_NEQ"
-    | PLUS -> fprintf out "PLUS"
-    | MINUS -> fprintf out "MINUS"
-    | STAR -> fprintf out "STAR"
-    | DIV -> fprintf out "DIV"
-    | AND -> fprintf out "AND"
-    | OR -> fprintf out "OR"
-    | DOT -> fprintf out "DOT"
-    | NOT -> fprintf out "NOT"
-    | TYPE_INT -> fprintf out "TYPE_INT"
-    | TYPE_FLOAT -> fprintf out "TYPE_FLOAT"
-    | LP -> fprintf out "LP"
-    | RP -> fprintf out "RP"
-    | LB -> fprintf out "LB"
-    | RB -> fprintf out "RB"
-    | LC -> fprintf out "LC"
-    | RC -> fprintf out "RC"
-    | STRUCT -> fprintf out "STRUCT"
-    | RETURN -> fprintf out "RETURN"
-    | IF -> fprintf out "IF"
-    | ELSE -> fprintf out "ELSE"
-    | WHILE -> fprintf out "WHILE"
+    | INT (i, r) -> fprintf out "INT<%ld>(%a)" i Range.dump r
+    | FLOAT (f, r) -> fprintf out "FLOAT<%f>(%a)" f Range.dump r
+    | ID (s, r) -> fprintf out "ID<%s>(%a)" s Range.dump r
+    | SEMI (_, r) -> fprintf out "SEMI(%a)" Range.dump r
+    | COMMA (_, r) -> fprintf out "COMMA(%a)" Range.dump r
+    | ASSIGNOP (_, r) -> fprintf out "ASSIGNOP(%a)" Range.dump r
+    | RELOP_GT (_, r) -> fprintf out "RELOP_GT(%a)" Range.dump r
+    | RELOP_LT (_, r) -> fprintf out "RELOP_LT(%a)" Range.dump r
+    | RELOP_GEQ (_, r) -> fprintf out "RELOP_GEQ(%a)" Range.dump r
+    | RELOP_LEQ (_, r) -> fprintf out "RELOP_LEQ(%a)" Range.dump r
+    | RELOP_EEQ (_, r) -> fprintf out "RELOP_EEQ(%a)" Range.dump r
+    | RELOP_NEQ (_, r) -> fprintf out "RELOP_NEQ(%a)" Range.dump r
+    | PLUS (_, r) -> fprintf out "PLUS(%a)" Range.dump r
+    | MINUS (_, r) -> fprintf out "MINUS(%a)" Range.dump r
+    | STAR (_, r) -> fprintf out "STAR(%a)" Range.dump r
+    | DIV (_, r) -> fprintf out "DIV(%a)" Range.dump r
+    | AND (_, r) -> fprintf out "AND(%a)" Range.dump r
+    | OR (_, r) -> fprintf out "OR(%a)" Range.dump r
+    | DOT (_, r) -> fprintf out "DOT(%a)" Range.dump r
+    | NOT (_, r) -> fprintf out "NOT(%a)" Range.dump r
+    | TYPE_INT (_, r) -> fprintf out "TYPE_INT(%a)" Range.dump r
+    | TYPE_FLOAT (_, r) -> fprintf out "TYPE_FLOAT(%a)" Range.dump r
+    | LP (_, r) -> fprintf out "LP(%a)" Range.dump r
+    | RP (_, r) -> fprintf out "RP(%a)" Range.dump r
+    | LB (_, r) -> fprintf out "LB(%a)" Range.dump r
+    | RB (_, r) -> fprintf out "RB(%a)" Range.dump r
+    | LC (_, r) -> fprintf out "LC(%a)" Range.dump r
+    | RC (_, r) -> fprintf out "RC(%a)" Range.dump r
+    | STRUCT (_, r) -> fprintf out "STRUCT(%a)" Range.dump r
+    | RETURN (_, r) -> fprintf out "RETURN(%a)" Range.dump r
+    | IF (_, r) -> fprintf out "IF(%a)" Range.dump r
+    | ELSE (_, r) -> fprintf out "ELSE(%a)" Range.dump r
+    | WHILE (_, r) -> fprintf out "WHILE(%a)" Range.dump r
     | EOF -> fprintf out "[eof]"
-
-  let dump out (tok : token) =
-    let r, p = tok in
-    Printf.fprintf out "%a in %a" dump_raw_token r Range.dump p
 end
 
 module Literal : sig
