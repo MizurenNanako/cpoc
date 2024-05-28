@@ -5,9 +5,14 @@
  (modules raw_lexer)
  (libraries lexical))
 
+(library
+ (name pure_lexer)
+ (modules pure_lexer)
+ (libraries raw_lexer parser lexical))
+
 (menhir
  (modules parser)
- (flags --table --external-tokens Lexical.Token --dump)
+ (flags --table --inspection --dump --external-tokens Lexical.Token)
  (infer true))
 
 (library
@@ -18,6 +23,13 @@
 (library
  (name lexical)
  (modules lexical)
+ (preprocess
+  (pps ppx_sexp_conv))
+ (libraries sexplib))
+
+(library
+ (name semantic)
+ (modules semantic)
  (preprocess
   (pps ppx_sexp_conv))
  (libraries sexplib))
