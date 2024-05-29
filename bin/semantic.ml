@@ -17,7 +17,7 @@ module CType = struct
     | CVoid
     | CInt
     | CFloat
-    | CArray of t * int
+    | CArray of t * int32
     | CStruct of CId.t
     | CFunc of CId.t
   [@@deriving sexp_of]

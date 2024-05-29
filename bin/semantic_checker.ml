@@ -215,7 +215,7 @@ module TypeChecker = struct
         fundec_register env ty1 fd
 
   and fundec_register env ty fd =
-    let FunDec (id, VarList pdl), rng = fd in
+    let FunDec (id, VarList pdl), _ = fd in
     let id, _ = idcnv id in
     let tyl = List.map (type_from_param env) pdl in
     let f = (ty, tyl) in

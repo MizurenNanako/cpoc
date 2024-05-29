@@ -74,7 +74,7 @@ module AST = struct
 
   (* Declarators *)
   and vardec = vardec' * rng
-  and vardec' = VarDec of identifier | VarDecArr of vardec * int
+  and vardec' = VarDec of identifier | VarDecArr of vardec * int32
   and fundec = fundec' * rng
   and fundec' = FunDec of identifier * varlist
   and varlist = VarList of paramdec list
