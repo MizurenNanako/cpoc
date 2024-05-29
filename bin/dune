@@ -18,7 +18,7 @@
 (library
  (name parser)
  (modules parser)
- (libraries lexical syntactical menhirLib))
+ (libraries lexical syntactic menhirLib))
 
 (library
  (name lexical)
@@ -35,8 +35,13 @@
  (libraries sexplib))
 
 (library
- (name syntactical)
- (modules syntactical)
+ (name semantic_checker)
+ (modules semantic_checker)
+ (libraries semantic syntactic))
+
+(library
+ (name syntactic)
+ (modules syntactic)
  (preprocess
   (pps ppx_sexp_conv))
  (libraries sexplib lexical))
@@ -45,4 +50,4 @@
  (modules main)
  (name main)
  (public_name cpoc)
- (libraries raw_lexer parser syntactical sexplib))
+ (libraries raw_lexer parser syntactic sexplib))

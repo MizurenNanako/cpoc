@@ -11,27 +11,27 @@ module Range = struct
 
   type t = pos * pos
 
-  let sexp_of_t (r : t) =
-    let open Sexplib.Pre_sexp in
+  let to_string (r : t) =
     let a, b = r in
-    let s =
-      if a.pos_fname = b.pos_fname then
-        if a.pos_lnum = b.pos_lnum then
-          Printf.sprintf "%s:%i:%i-%i" a.pos_fname a.pos_lnum
-            (a.pos_cnum - a.pos_bol + 1)
-            (b.pos_cnum - b.pos_bol + 1)
-        else
-          Printf.sprintf "%s:%i:%i-%i:%i" a.pos_fname a.pos_lnum
-            (a.pos_cnum - a.pos_bol + 1)
-            b.pos_lnum
-            (b.pos_cnum - b.pos_bol + 1)
-      else
-        Printf.sprintf "%s:%i:%i-%s:%i:%i" a.pos_fname a.pos_lnum
+    if a.pos_fname = b.pos_fname then
+      if a.pos_lnum = b.pos_lnum then
+        Printf.sprintf "%s:%i:%i-%i" a.pos_fname a.pos_lnum
           (a.pos_cnum - a.pos_bol + 1)
-          b.pos_fname b.pos_lnum
           (b.pos_cnum - b.pos_bol + 1)
-    in
-    Atom s
+      else
+        Printf.sprintf "%s:%i:%i-%i:%i" a.pos_fname a.pos_lnum
+          (a.pos_cnum - a.pos_bol + 1)
+          b.pos_lnum
+          (b.pos_cnum - b.pos_bol + 1)
+    else
+      Printf.sprintf "%s:%i:%i-%s:%i:%i" a.pos_fname a.pos_lnum
+        (a.pos_cnum - a.pos_bol + 1)
+        b.pos_fname b.pos_lnum
+        (b.pos_cnum - b.pos_bol + 1)
+
+  let sexp_of_t (r : t) =
+    let s = to_string r in
+    Sexplib.Pre_sexp.Atom s
 
   let join (a : t) (b : t) : t = (fst a, snd b)
 

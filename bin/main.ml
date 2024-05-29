@@ -19,6 +19,6 @@ let () =
           (lcp.pos_cnum - lcp.pos_bol + 1);
         exit 0
   in
-  let ast_sexp = Syntactical.AST.sexp_of_t ast in
+  let ast_sexp = Syntactic.AST.sexp_of_t ast in
   Sexplib.Sexp.output_hum stdout ast_sexp;
   print_newline ()

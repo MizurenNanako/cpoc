@@ -1,5 +1,5 @@
 %{
-    open Syntactical.AST
+    open Syntactic.AST
     let j (a: 'a * rng) (b: 'b * rng) = 
         Lexical.Range.join (snd a) (snd b)
 

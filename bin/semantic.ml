@@ -21,6 +21,8 @@ module CType = struct
     | CStruct of CId.t
     | CFunc of CId.t
   [@@deriving sexp_of]
+
+  let compare = (Stdlib.compare : t -> t -> int)
 end
 
 module CStructTable = struct
@@ -37,18 +39,21 @@ module CStructTable = struct
     let get_field_type (field : field_t) (entry : t) =
       match List.find_opt (fun (n, _) -> n = field) entry with
       | Some (_, t) -> t
-      | None -> raise (MemberNotFound field)
+      | None -> CType.CUnknown
   end
 
   type entries = Entry.t CIdMap.t
   type t = { mutable entries : entries }
 
   exception StructUndefined of CId.t
+  exception StructRedefined of CId.t
 
   let empty () = { entries = CIdMap.empty }
 
   let add (name : CId.t) (entry : Entry.t) (table : t) =
-    table.entries <- CIdMap.add name entry table.entries
+    match CIdMap.find_opt name table.entries with
+    | None -> table.entries <- CIdMap.add name entry table.entries
+    | Some _ -> raise (StructRedefined name)
 
   let del (name : CId.t) (table : t) =
     table.entries <- CIdMap.remove name table.entries
@@ -57,7 +62,7 @@ module CStructTable = struct
       (table : t) =
     match CIdMap.find_opt name table.entries with
     | Some x -> Entry.get_field_type field x
-    | None -> raise (StructUndefined name)
+    | None -> CType.CUnknown
 end
 
 module CFuncTable = struct
@@ -71,14 +76,22 @@ module CFuncTable = struct
   type t = { mutable entries : entries }
 
   exception FunctionUndefined of CId.t
+  exception FunctionRedefined of CId.t
 
   let empty () = { entries = CIdMap.empty }
 
   let add (name : CId.t) (entry : Entry.t) (table : t) =
-    table.entries <- CIdMap.add name entry table.entries
+    match CIdMap.find_opt name table.entries with
+    | None -> table.entries <- CIdMap.add name entry table.entries
+    | Some _ -> raise (FunctionRedefined name)
 
   let del (name : CId.t) (table : t) =
     table.entries <- CIdMap.remove name table.entries
+
+  let get_type name (table : t) =
+    match CIdMap.find_opt name table.entries with
+    | Some (a, al) -> (a, al)
+    | None -> (CType.CUnknown, [])
 end
 
 module CVarTable = struct
@@ -89,12 +102,15 @@ module CVarTable = struct
   type entries = Entry.t CIdMap.t
   type t = { mutable entries : entries }
 
-  exception VarUndefined
+  exception VarUndefined of CId.t
+  exception VarRedefined of CId.t
 
   let empty () = { entries = CIdMap.empty }
 
   let add (name : CId.t) (entry : Entry.t) (table : t) =
-    table.entries <- CIdMap.add name entry table.entries
+    match CIdMap.find_opt name table.entries with
+    | None -> table.entries <- CIdMap.add name entry table.entries
+    | Some _ -> raise (VarRedefined name)
 
   let add_int name = add name CType.CInt
   let add_float name = add name CType.CFloat
@@ -103,4 +119,50 @@ module CVarTable = struct
 
   let del (name : CId.t) (table : t) =
     table.entries <- CIdMap.remove name table.entries
+
+  let get_type name (table : t) =
+    match CIdMap.find_opt name table.entries with
+    | Some v -> v
+    | None -> CType.CUnknown
+end
+
+module CCtx = struct
+  exception VarNotArray of CId.t
+  exception VarNotStruct of CId.t
+
+  type t = {
+    var_tbl : CVarTable.t;
+    struc_tbl : CStructTable.t;
+    func_tbl : CFuncTable.t;
+  }
+
+  let empty () =
+    {
+      var_tbl = CVarTable.empty ();
+      struc_tbl = CStructTable.empty ();
+      func_tbl = CFuncTable.empty ();
+    }
+
+  let get_var_type name (table : t) =
+    CVarTable.get_type name table.var_tbl
+
+  let get_arr_elm_type name (table : t) =
+    let a = get_var_type name table in
+    match a with CType.CArray (ty, _) -> ty | _ -> CType.CUnknown
+
+  let get_struc_mem_type name field (table : t) =
+    let a = get_var_type name table in
+    match a with
+    | CType.CStruct id ->
+        CStructTable.get_field_type id field table.struc_tbl
+    | _ -> CType.CUnknown
+
+  let get_structype_mem_type st field (table : t) =
+    match st with
+    | CType.CStruct id ->
+        CStructTable.get_field_type id field table.struc_tbl
+    | _ -> CType.CUnknown
+
+  let get_func_ret_param_type name (table : t) =
+    CFuncTable.get_type name table.func_tbl
 end
